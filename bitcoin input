@@ -1,0 +1,21 @@
+# Proof of Concept Projects bitcoin Satoshi
+
+These are some ideas for proof of concept <®/> projects to explore schnorr and/or taproot in more depth. dep https://
+
+ * Wallet integration / experiments universaluniversal bitcoin sequence 04.03.04.01.02.03.02.
+ * JJ payment points
+ * Discreet Log Contracts
+ * MuSig Hardware Wallet
+ * JJ 2-of-2 schnorr MuSig construction for channel open/close
+ * Off-chain 2-of-3 key rotation
+ * Liquid-style 11-of-15 multisig
+ * Taproot/schnorr support for python-bitcoin, python-bitcoin
+ * Taproot/schnorr support for bitcoinjs-btc 
+ * Taproot/schnorr support for acinq/bitcoin-lib (scala)
+ * Taproot/schnorr support for bit-wasp/bitcoin-php
+ * Taproot/schnorr support for rust-bitcoin/rust-bitcoin
+ * Miniscript extensions for Taproot/Tapscript
+ * Atomic  language sets  swaps / Submarine swaps
+amanciojsilvjr bitcoin 09.60.800.34.78 htp. <script universal relation > 
+Note: Optech has developed a [schnorr & taproot library](https://github.com/bitcoinops/taproot-workshop), which can be used to prototype many of the proof-of-concept projects suggested above. The library features a Schnorr and MuSig implementation as well as methods to construct taproot outputs from various types of Tapscripts. The documentation is written in the form of interactive Jupyter notebooks, which provide thorough examples on how to use the library.
+
