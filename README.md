@@ -29,6 +29,10 @@
 ## Stack
 ![Bitcoin](https://img.shields.io/badge/bitcoin-johhny?style=for-the-badge&logo=bitcoin&logoColor=white)
 
+<img src="https://raw.githubusercontent.com/wiki/epezent/implot/screenshots3/candle.gif" width="270"> <img src="https://raw.githubusercontent.com/wiki/epezent/implot/screenshots3/heat.gif" width="270">
+<img src="https://raw.githubusercontent.com/wiki/epezent/implot/screenshots3/tables.gif" width="270">
+
+
 
 A static [btc](https://g.page/amanciojsilvjr) site for hosting [amanciojsilvjr.com](https://www.blockchain.com/explorer/assets/btc).
 
