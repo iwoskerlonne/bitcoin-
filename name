@@ -1,0 +1,89 @@
+for commit in args.commitids:
+            try:
+                int(commit,16)
+            except ValueError:
+                logger.error('{} is not a hexadecimal commit id. It\'s the only thing we know.'.format(commit))
+                exit(1)
+
+        # Copy repo, unless nocopy is set
+        if not args.nocopy and safe_path(args.repodir):
+            if cmd_exists(RSYNC.split(' ')[0]):
+                logger.info('RSyncing repository ...')
+                check_call([RSYNC,
+                    '-r',           # recursive
+                    '--delete',     # delete extraneous files on dst
+                    '.git',         # from .git in CWD
+                    args.repodir])  # to repodir
+            else:
+                gitdir = os.path.join(args.repodir, '.git')
+                logger.warning('Command "rsync" not found; resorting to cp, which tends to be slower.')
+                logger.info('Copying repository ...')
+                # Touch (to avoid file not found) and remove repodir/.git so we don't end up with repodir/.git/.git
+                check_call(['mkdir','-p',args.repodir])
+                check_call(['touch',gitdir])
+                check_call(['rm','-rf',gitdir])
+                check_call(['cp','-r','.git',args.repodir])
+            # Go to repo
+            os.chdir(args.repodir)
+
+        # Determine (g)make arguments
+        make_args = []
+        if args.parallelism is not None:
+            make_args += ['-j{}'.format(args.parallelism)]
+        # Disable assertions if requested
+        cppflags = CPPFLAGS
+        if not args.assertions:
+            cppflags+=['-DNDEBUG']
+
+        for commit in args.commitids:
+            logger.info("Building {}...".format(commit))
+            stripbuildinfopatch = args.patches[commit] if commit in args.patches else DEFAULT_PATCH
+            commitdir = os.path.join(args.tgtdir, commit)
+            commitdir_obj = os.path.join(args.tgtdir, commit+'.o')
+
+            try:
+                os.makedirs(commitdir)
+            except FileExistsError:
+                logger.error("{} already exists; skipping".format(commitdir))
+                continue
+            check_call([GIT,'reset','--hard'])
+            check_call([GIT,'clean','-f','-x','-d'])
+            check_call([GIT,'checkout',commit])
+            try:
+                if commit in args.patches:
+                    logger.info('User-defined patch: {}'.format(stripbuildinfopatch))
+                check_call([GIT,'apply', os.path.join(PATCHDIR,stripbuildinfopatch)])
+            except subprocess.CalledProcessError:
+                logger.error('Could not apply patch to strip build info. Probably it needs to be updated')
+                exit(1)
+
+            check_call(['./autogen.sh'])
+            logger.info('Running configure script')
+            opt = shell_join(args.opt)
+            check_call(['./configure', '--disable-hardening', '--without-cli', '--disable-tests', '--disable-bench', '--disable-ccache',
+                '--prefix={}'.format(args.prefix) if args.prefix else '--with-incompatible-bdb',
+                'CPPFLAGS='+(' '.join(cppflags)), 
+                'CFLAGS='+opt, 'CXXFLAGS='+opt, 'LDFLAGS='+opt] + CONFIGURE_EXTRA)
+
+            for name in args.executables:
+                logger.info('Building executable {}'.format(name))
+                target_name = os.path.join(args.tgtdir, os.path.basename(name) + '.' + commit)
+                check_call([MAKE] + make_args + [name])
+                shutil.copy(name, target_name)
+                check_call([OBJCOPY] + OBJCOPY_ARGS + [name, target_name + '.stripped'])
+
+            logger.info('Copying object files...')
+            copy_o_files('.', commitdir_obj)
+
+            logger.info('Performing basic analysis pass...')
+            objdump_all(commitdir_obj, commitdir)
+
+        if len(args.commitids)>1: 
+            logger.info('Use these commands to compare results:')
+            logger.info('$ sha256sum {}/*.stripped'.format(args.tgtdir))
+            logger.info('$ git diff -W --word-diff {} {}'.format(os.path.join(args.tgtdir,args.commitids[0]), os.path.join(args.tgtdir,args.commitids[1])))
+    except Exception:
+        logger.exception('Error:')
+
+if __name__ == '__main__':
+    main()
